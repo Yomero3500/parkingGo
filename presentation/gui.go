@@ -98,10 +98,10 @@ func CreateGUI() *ParkingGUI {
 
 	// Cargar imágenes de vehículos
 	var carImages []string
-	files, _ := os.ReadDir("assets")
+	files, _ := os.ReadDir("sprites")
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".png" {
-			carImages = append(carImages, filepath.Join("assets", file.Name()))
+			carImages = append(carImages, filepath.Join("sprites", file.Name()))
 		}
 	}
 
