@@ -8,10 +8,10 @@ import (
 )
 
 type Simulator struct {
-	parkingService *domain.ParkingService
+	parkingService *domain.ParkingManager
 }
 
-func NewSimulator(parkingService *domain.ParkingService) *Simulator {
+func NewSimulator(parkingService *domain.ParkingManager) *Simulator {
 	return &Simulator{
 		parkingService: parkingService,
 	}
@@ -24,7 +24,7 @@ func (s *Simulator) SimulateVehicle(id int, wg *sync.WaitGroup) {
 	var space int
 	var success bool
 	for {
-		space, success = s.parkingService.VehicleEnter(vehicle)
+		space, success = s.parkingService.HandleVehicleEntry(vehicle)
 		if success {
 			break
 		}
@@ -35,7 +35,7 @@ func (s *Simulator) SimulateVehicle(id int, wg *sync.WaitGroup) {
 	time.Sleep(time.Duration(parkingTime) * time.Second)
 
 	for {
-		if s.parkingService.VehicleExit(vehicle, space) {
+		if s.parkingService.HandleVehicleExit(vehicle, space) {
 			break
 		}
 		time.Sleep(time.Millisecond * 50)

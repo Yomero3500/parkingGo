@@ -32,7 +32,7 @@ func SetupStartButton(gui *presentation.ParkingGUI, simulator *Simulator) {
 			wg.Wait()
 			startBtn.Enable()
 			startBtn.SetText("Iniciar Simulación")
-			simulator.parkingService.UpdateStats("Simulación completada")
+			simulator.parkingService.RefreshStatus("Simulación completada")
 		}()
 	}
 }

@@ -22,7 +22,7 @@ func main() {
 		lot.SpacesAvailable <- true
 	}
 
-	parkingService := domain.NewParkingService(lot)
+	parkingService := domain.NewParkingManager(lot)
 	gui := presentation.CreateGUI()
 	guiService := presentation.NewGUIService(gui)
 	simulator := application.NewSimulator(parkingService)
