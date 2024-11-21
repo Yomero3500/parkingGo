@@ -23,15 +23,15 @@ func main() {
 	}
 
 	parkingService := domain.NewParkingManager(lot)
-	gui := presentation.CreateGUI()
-	guiService := presentation.NewGUIService(gui)
+	gui := presentation.CreateParkingView()
+	guiService := presentation.NewViewHandler(gui)
 	simulator := application.NewSimulator(parkingService)
 
 	// Configurar el manejo de actualizaciones de la GUI
 	go func() {
 		for text := range lot.UpdateChan {
-			gui.Stats.SetText(text)
-			gui.Window.Canvas().Refresh(gui.Stats)
+			gui.InfoLabel.SetText(text)
+			gui.MainWindow.Canvas().Refresh(gui.InfoLabel)
 		}
 	}()
 
@@ -40,14 +40,14 @@ func main() {
 		for {
 			lot.Mu.Lock()
 			for i, occupied := range lot.Spaces {
-				guiService.UpdateParkingSpace(i, occupied, gui.CarImages[rand.Intn(len(gui.CarImages))])
+				guiService.UpdateSlot(i, occupied, gui.ImageAssets[rand.Intn(len(gui.ImageAssets))])
 			}
-			guiService.UpdateEntranceColor(lot.Direction)
+			guiService.ChangeIndicatorColor(lot.Direction)
 			lot.Mu.Unlock()
 			time.Sleep(time.Millisecond * 100)
 		}
 	}()
 
 	application.SetupStartButton(gui, simulator)
-	gui.Window.ShowAndRun()
+	gui.MainWindow.ShowAndRun()
 }

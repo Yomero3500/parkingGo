@@ -12,8 +12,8 @@ import (
 	"github.com/Yomero3500/parkingGo/presentation"
 )
 
-func SetupStartButton(gui *presentation.ParkingGUI, simulator *Simulator) {
-	buttonContainer := gui.Window.Content().(*fyne.Container).Objects[0].(*fyne.Container).Objects[7].(*fyne.Container)
+func SetupStartButton(gui *presentation.ParkingView, simulator *Simulator) {
+	buttonContainer := gui.MainWindow.Content().(*fyne.Container).Objects[0].(*fyne.Container).Objects[7].(*fyne.Container)
 	startBtn := buttonContainer.Objects[1].(*widget.Button)
 	
 	startBtn.OnTapped = func() {

@@ -15,144 +15,129 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// ParkingGUI representa la interfaz gráfica del estacionamiento
-type ParkingGUI struct {
-	Spaces    [20]*fyne.Container
-	Entrance  *canvas.Rectangle
-	Stats     *widget.Label
-	Legend    *widget.Label
-	Window    fyne.Window
-	CarImages []string
+type ParkingView struct {
+	Slots       [20]*fyne.Container
+	Indicator   *canvas.Rectangle
+	InfoLabel   *widget.Label
+	HelpText    *widget.Label
+	MainWindow  fyne.Window
+	ImageAssets []string
 }
 
-// GUIService maneja las operaciones de la interfaz gráfica
-type GUIService struct {
-	gui *ParkingGUI
+type ViewHandler struct {
+	view *ParkingView
 }
 
-// NewGUIService crea una nueva instancia del servicio GUI
-func NewGUIService(gui *ParkingGUI) *GUIService {
-	return &GUIService{gui: gui}
+func NewViewHandler(view *ParkingView) *ViewHandler {
+	return &ViewHandler{view: view}
 }
 
-// UpdateParkingSpace actualiza el estado visual de un espacio de estacionamiento
-func (s *GUIService) UpdateParkingSpace(index int, occupied bool, carImage string) {
-	container := s.gui.Spaces[index]
-	if occupied {
-		if len(container.Objects) <= 2 {
-			carImg := canvas.NewImageFromFile(carImage)
-			carImg.Resize(fyne.NewSize(50, 50))
-			carImg.FillMode = canvas.ImageFillContain
-			container.Add(carImg)
+func (vh *ViewHandler) UpdateSlot(slotIndex int, isOccupied bool, imagePath string) {
+	slotContainer := vh.view.Slots[slotIndex]
+	if isOccupied {
+		if len(slotContainer.Objects) <= 2 {
+			carImage := canvas.NewImageFromFile(imagePath)
+			carImage.Resize(fyne.NewSize(50, 50))
+			carImage.FillMode = canvas.ImageFillContain
+			slotContainer.Add(carImage)
 		}
 	} else {
-		if len(container.Objects) > 2 {
-			container.Objects = container.Objects[:2]
+		if len(slotContainer.Objects) > 2 {
+			slotContainer.Objects = slotContainer.Objects[:2]
 		}
 	}
-	container.Refresh()
+	slotContainer.Refresh()
 }
 
-// UpdateEntranceColor actualiza el color de la entrada según el estado
-func (s *GUIService) UpdateEntranceColor(direction int) {
-	switch direction {
+func (vh *ViewHandler) ChangeIndicatorColor(state int) {
+	switch state {
 	case 1:
-		s.gui.Entrance.FillColor = color.RGBA{0, 123, 255, 255}
+		vh.view.Indicator.FillColor = color.RGBA{0, 123, 255, 255}
 	case -1:
-		s.gui.Entrance.FillColor = color.RGBA{255, 123, 0, 255}
+		vh.view.Indicator.FillColor = color.RGBA{255, 123, 0, 255}
 	default:
-		s.gui.Entrance.FillColor = color.RGBA{40, 167, 69, 255}
+		vh.view.Indicator.FillColor = color.RGBA{40, 167, 69, 255}
 	}
-	s.gui.Entrance.Refresh()
+	vh.view.Indicator.Refresh()
 }
 
-// CreateGUI crea y configura la interfaz gráfica del estacionamiento
-func CreateGUI() *ParkingGUI {
-	myApp := app.New()
-	window := myApp.NewWindow("Simulador de Estacionamiento")
+func CreateParkingView() *ParkingView {
+	appInstance := app.New()
+	mainWin := appInstance.NewWindow("Parking Simulator")
 
-	// Crear contenedor principal con padding
-	mainContainer := container.NewPadded()
-	content := container.NewVBox()
+	rootContainer := container.NewPadded()
+	uiContent := container.NewVBox()
 
-	// Configurar estadísticas
-	stats := widget.NewLabelWithStyle("Vehículos en espera: 0", 
-		fyne.TextAlignCenter, 
+	infoLabel := widget.NewLabelWithStyle("Vehicles in queue: 0",
+		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true})
-	statsContainer := container.NewHBox(layout.NewSpacer(), stats, layout.NewSpacer())
+	infoContainer := container.NewHBox(layout.NewSpacer(), infoLabel, layout.NewSpacer())
 
-	// Configurar leyenda
-	legendCard := widget.NewCard("Leyenda", "", nil)
-	legendText := "🟢 Verde: Entrada libre\n" +
-		"🔵 Azul: Vehículo entrando\n" +
-		"🟠 Naranja: Vehículo saliendo\n" +
-		"⚪ Gris: Espacio libre\n"
-	legend := widget.NewLabelWithStyle(legendText, 
-		fyne.TextAlignLeading, 
+	helpCard := widget.NewCard("Legend", "", nil)
+	helpMessage := "🟢 Green: Free entry\n" +
+		"🔵 Blue: Vehicle entering\n" +
+		"🟠 Orange: Vehicle exiting\n" +
+		"⚪ Gray: Free space\n"
+	helpLabel := widget.NewLabelWithStyle(helpMessage,
+		fyne.TextAlignLeading,
 		fyne.TextStyle{Monospace: true})
-	legendCard.SetContent(legend)
+	helpCard.SetContent(helpLabel)
 
-	// Configurar espacios de estacionamiento
-	var fixedParkingSpaces [20]*fyne.Container
-	spacesContainer := container.NewGridWithColumns(10)
+	var parkingSlots [20]*fyne.Container
+	slotsGrid := container.NewGridWithColumns(10)
 
-	// Cargar imágenes de vehículos
-	var carImages []string
+	var assetImages []string
 	files, _ := os.ReadDir("sprites")
 	for _, file := range files {
 		if filepath.Ext(file.Name()) == ".png" {
-			carImages = append(carImages, filepath.Join("sprites", file.Name()))
+			assetImages = append(assetImages, filepath.Join("sprites", file.Name()))
 		}
 	}
 
-	// Crear espacios de estacionamiento
 	for i := 0; i < 20; i++ {
-		space := canvas.NewRectangle(color.RGBA{200, 200, 200, 255})
-		space.SetMinSize(fyne.NewSize(60, 60))
-		space.Resize(fyne.NewSize(60, 60))
-		
-		spaceNumber := canvas.NewText(fmt.Sprintf("%d", i+1), color.Black)
-		spaceNumber.TextSize = 12
-		spaceNumber.Alignment = fyne.TextAlignCenter
-		
-		spaceContainer := container.NewStack(space, spaceNumber)
-		fixedParkingSpaces[i] = spaceContainer
-		spacesContainer.Add(container.NewPadded(spaceContainer))
+		spaceRect := canvas.NewRectangle(color.RGBA{200, 200, 200, 255})
+		spaceRect.SetMinSize(fyne.NewSize(60, 60))
+		spaceRect.Resize(fyne.NewSize(60, 60))
+
+		slotNumber := canvas.NewText(fmt.Sprintf("%d", i+1), color.Black)
+		slotNumber.TextSize = 12
+		slotNumber.Alignment = fyne.TextAlignCenter
+
+		slotContainer := container.NewStack(spaceRect, slotNumber)
+		parkingSlots[i] = slotContainer
+		slotsGrid.Add(container.NewPadded(slotContainer))
 	}
 
-	// Configurar entrada/salida
-	entranceCard := widget.NewCard("Entrada/Salida", "", nil)
-	entrance := canvas.NewRectangle(color.RGBA{0, 255, 0, 255})
-	entrance.SetMinSize(fyne.NewSize(300, 40))
-	entranceContainer := container.NewHBox(layout.NewSpacer(), entrance, layout.NewSpacer())
-	entranceCard.SetContent(entranceContainer)
+	indicatorCard := widget.NewCard("Entrance/Exit", "", nil)
+	indicatorRect := canvas.NewRectangle(color.RGBA{0, 255, 0, 255})
+	indicatorRect.SetMinSize(fyne.NewSize(300, 40))
+	indicatorContainer := container.NewHBox(layout.NewSpacer(), indicatorRect, layout.NewSpacer())
+	indicatorCard.SetContent(indicatorContainer)
 
-	// Configurar botón de inicio
-	startBtn := widget.NewButton("Iniciar Simulación", nil)
-	startBtn.Importance = widget.HighImportance
-	startBtn.Resize(fyne.NewSize(200, 40))
-	buttonContainer := container.NewHBox(layout.NewSpacer(), startBtn, layout.NewSpacer())
+	startButton := widget.NewButton("Start Simulation", nil)
+	startButton.Importance = widget.HighImportance
+	startButton.Resize(fyne.NewSize(200, 40))
+	buttonContainer := container.NewHBox(layout.NewSpacer(), startButton, layout.NewSpacer())
 
-	// Organizar elementos en la interfaz
-	content.Add(statsContainer)
-	content.Add(widget.NewSeparator())
-	content.Add(legendCard)
-	content.Add(widget.NewSeparator())
-	content.Add(spacesContainer)
-	content.Add(widget.NewSeparator())
-	content.Add(entranceCard)
-	content.Add(buttonContainer)
+	uiContent.Add(infoContainer)
+	uiContent.Add(widget.NewSeparator())
+	uiContent.Add(helpCard)
+	uiContent.Add(widget.NewSeparator())
+	uiContent.Add(slotsGrid)
+	uiContent.Add(widget.NewSeparator())
+	uiContent.Add(indicatorCard)
+	uiContent.Add(buttonContainer)
 
-	mainContainer.Add(content)
-	window.SetContent(mainContainer)
-	window.Resize(fyne.NewSize(900, 600))
+	rootContainer.Add(uiContent)
+	mainWin.SetContent(rootContainer)
+	mainWin.Resize(fyne.NewSize(900, 600))
 
-	return &ParkingGUI{
-		Spaces:    fixedParkingSpaces,
-		Entrance:  entrance,
-		Stats:     stats,
-		Legend:    legend,
-		Window:    window,
-		CarImages: carImages,
+	return &ParkingView{
+		Slots:       parkingSlots,
+		Indicator:   indicatorRect,
+		InfoLabel:   infoLabel,
+		HelpText:    helpLabel,
+		MainWindow:  mainWin,
+		ImageAssets: assetImages,
 	}
 }
