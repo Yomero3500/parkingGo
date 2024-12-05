@@ -1,4 +1,4 @@
-package application
+package app
 
 import (
 	"math/rand"
@@ -11,7 +11,7 @@ type Simulator struct {
 	parkingService *domain.ParkingManager
 }
 
-func NewSimulator(parkingService *domain.ParkingManager) *Simulator {
+func NewSimulator(parkingService *domain.ParkingManager	) *Simulator {
 	return &Simulator{
 		parkingService: parkingService,
 	}

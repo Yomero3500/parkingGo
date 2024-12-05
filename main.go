@@ -3,7 +3,7 @@ package main
 import (
 	"math/rand"
 	"time"
-	"github.com/Yomero3500/parkingGo/application"
+	"github.com/Yomero3500/parkingGo/app"
 	"github.com/Yomero3500/parkingGo/domain"
 	"github.com/Yomero3500/parkingGo/presentation"
 )
@@ -25,9 +25,8 @@ func main() {
 	parkingService := domain.NewParkingManager(lot)
 	gui := presentation.CreateParkingView()
 	guiService := presentation.NewViewHandler(gui)
-	simulator := application.NewSimulator(parkingService)
+	simulator := app.NewSimulator(parkingService)
 
-	// Configurar el manejo de actualizaciones de la GUI
 	go func() {
 		for text := range lot.UpdateChan {
 			gui.InfoLabel.SetText(text)
@@ -35,7 +34,6 @@ func main() {
 		}
 	}()
 
-	// Configurar las actualizaciones visuales del estacionamiento
 	go func() {
 		for {
 			lot.Mu.Lock()
@@ -48,6 +46,6 @@ func main() {
 		}
 	}()
 
-	application.SetupStartButton(gui, simulator)
+	app.SetupStartButton(gui, simulator)
 	gui.MainWindow.ShowAndRun()
 }

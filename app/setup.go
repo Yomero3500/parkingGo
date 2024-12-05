@@ -1,5 +1,5 @@
-// application/setup.go
-package application
+// app/setup.go
+package app
 
 import (
 	"math/rand"
